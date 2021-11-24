@@ -24,12 +24,25 @@ export const state = {
   }
 
   export const actions = {
-    createEvent({ commit }, event) {
+    createEvent({ commit, dispatch }, event) {
       return EventService.postEvent(event).then(() => {
         commit("ADD_EVENT", event);
+        const notification = {
+          type: 'success',
+          message: 'Your event has been created!'
+        }
+        dispatch('notification/add', notification, {root: true })
+        .catch(error => {
+          const notification = {
+            type: 'error',
+            message: 'There was a problem creating events: ' + error.message
+          }
+          dispatch('notification/add', notification, {root: true })
+          throw error
+        })
       });
     },
-    fetchEvents({ commit }, { perPage, page }) {
+    fetchEvents({ commit, dispatch }, { perPage, page }) {
       EventService.getEvents(perPage, page)
         .then((response) => {
           console.log("Total events are " + response.headers["x-total-count"]);
@@ -37,10 +50,14 @@ export const state = {
           commit("SET_EVENTS", response.data);
         })
         .catch((error) => {
-          console.log("There was an error" + error);
+         const notification = {
+           type: 'error',
+           message: 'There was a problem fetching events: ' + error.message
+         }
+         dispatch('notification/add', notification, {root: true })
         });
     },
-    fetchEvent({ commit, getters }, id) {
+    fetchEvent({ commit, getters, dispatch }, id) {
       var event = getters.getEventById(id);
 
       if (event) {
@@ -51,7 +68,11 @@ export const state = {
             commit("SET_EVENT", response.data);
           })
           .catch((error) => {
-            console.log("There was an error:", error.response);
+            const notification = {
+              type: 'error',
+              message: 'There was a problem fetching event: ' + error.message
+            }
+            dispatch('notification/add', notification, {root: true })
           });
       }
     },
